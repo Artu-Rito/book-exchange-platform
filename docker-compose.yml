@@ -4,6 +4,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: book-exchange-backend
+    ports:
+      - "8000:8000"
     volumes:
       - backend_data:/app/data
       - backend_uploads:/app/uploads
