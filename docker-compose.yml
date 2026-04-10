@@ -1,0 +1,51 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: book-exchange-backend
+    volumes:
+      - backend_data:/app/data
+      - backend_uploads:/app/uploads
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./data/book_exchange.db
+      - SECRET_KEY=docker-secret-key-change-in-production-12345678
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - REFRESH_TOKEN_EXPIRE_DAYS=7
+      # Email notifications (SMTP)
+      - SMTP_SERVER=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USER=your-email@gmail.com
+      - SMTP_PASSWORD=your-app-password
+      - FROM_EMAIL=your-email@gmail.com
+    networks:
+      - book-exchange-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: book-exchange-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - book-exchange-network
+    restart: unless-stopped
+
+networks:
+  book-exchange-network:
+    driver: bridge
+
+volumes:
+  backend_data:
+  backend_uploads:

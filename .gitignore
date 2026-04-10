@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.db
+*.log
+.pytest_cache/
+.mypy_cache/
+
+# Environment
+.env
+.env.local
+.env.*.local
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+frontend/node_modules/
+
+# Build output
+frontend/dist/
+backend/build/
+
+# Docker volumes
+backend/data/
+backend/uploads/
+
+# Test coverage
+htmlcov/
+.coverage
+.coverage.*
+
+# Temporary files
+*.tmp
+*.bak
+*.json
+!package.json
+*.txt
+!requirements.txt
+*.bat
+*.js
+*.html
+ОТЧЁТ_ПО_ЛАБОРАТОРНЫМ.md
