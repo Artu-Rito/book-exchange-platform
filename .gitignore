@@ -50,11 +50,12 @@ htmlcov/
 # Temporary files
 *.tmp
 *.bak
+*.log
+*.bat
+ОТЧЁТ_ПО_ЛАБОРАТОРНЫМ.md
+
+# Debug JSON files (except package files)
 *.json
 !package.json
-*.txt
+!package-lock.json
 !requirements.txt
-*.bat
-*.js
-*.html
-ОТЧЁТ_ПО_ЛАБОРАТОРНЫМ.md
