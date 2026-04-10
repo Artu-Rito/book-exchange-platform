@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: http://localhost/sitemap.xml
+
+# Disallow admin and private routes
+Disallow: /admin/
+Disallow: /profile/
+Disallow: /reservations/
+Disallow: /calendar/

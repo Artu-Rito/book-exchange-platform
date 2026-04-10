@@ -1,67 +1,45 @@
 import pytest
-import pytest_asyncio
-from httpx import AsyncClient
+import tempfile
+from fastapi.testclient import TestClient
 from app.main import app
-from app.core.database import get_db, async_session_factory
-from app.core.database import Base
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-
-# Тестовая БД
-TEST_DATABASE_URL = "sqlite+aiosqlite:///./test_book_exchange.db"
+from app.core.database import get_db, Base, engine
 
 
-@pytest.fixture(scope="session")
-def anyio_backend():
-    return "asyncio"
+@pytest.fixture(scope="function")
+def test_db():
+    """Создание тестовой БД"""
+    Base.metadata.create_all(bind=engine)
+    yield
+    # Очистка после тестов
+    Base.metadata.drop_all(bind=engine)
 
 
-@pytest_asyncio.fixture(scope="function")
-async def test_engine():
-    """Создание тестового движка БД"""
-    from sqlalchemy.ext.asyncio import create_async_engine
-    engine = create_async_engine(TEST_DATABASE_URL, echo=False)
-    
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    
-    yield engine
-    
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-    
-    await engine.dispose()
+@pytest.fixture(scope="function")
+def db_session(test_db):
+    """Сессия для тестов"""
+    from sqlalchemy.orm import Session
+    session = Session(engine)
+    yield session
+    session.rollback()
+    session.close()
 
 
-@pytest_asyncio.fixture(scope="function")
-async def test_session(test_engine):
-    """Создание тестовой сессии БД"""
-    async_session = async_sessionmaker(
-        test_engine,
-        class_=AsyncSession,
-        expire_on_commit=False,
-    )
-    
-    async with async_session() as session:
-        yield session
-        await session.rollback()
-
-
-@pytest_asyncio.fixture(scope="function")
-async def client(test_session):
+@pytest.fixture
+def client(db_session):
     """Тестовый HTTP клиент"""
-    async def override_get_db():
-        yield test_session
+    def override_get_db():
+        yield db_session
     
     app.dependency_overrides[get_db] = override_get_db
     
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        yield ac
+    with TestClient(app) as test_client:
+        yield test_client
     
     app.dependency_overrides.clear()
 
 
-@pytest_asyncio.fixture
-async def test_user(client):
+@pytest.fixture
+def test_user(client):
     """Создание тестового пользователя"""
     user_data = {
         "email": "test@example.com",
@@ -69,17 +47,17 @@ async def test_user(client):
         "full_name": "Test User",
     }
     
-    response = await client.post("/api/v1/auth/register", json=user_data)
+    response = client.post("/api/v1/auth/register", json=user_data)
     return response.json()
 
 
-@pytest_asyncio.fixture
-async def auth_token(client, test_user):
+@pytest.fixture
+def auth_token(client, test_user):
     """Получение токена аутентификации"""
     login_data = {
         "email": "test@example.com",
         "password": "testpassword",
     }
     
-    response = await client.post("/api/v1/auth/login", json=login_data)
+    response = client.post("/api/v1/auth/login", json=login_data)
     return response.json()["access_token"]
